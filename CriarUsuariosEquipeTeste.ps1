@@ -25,15 +25,17 @@ if (-not $OutputCsvPath -or [string]::IsNullOrWhiteSpace($OutputCsvPath)) {
     $OutputCsvPath = Join-Path -Path (Get-Location) -ChildPath $defaultName
 }
 
-# Conecta no Graph se ainda não conectado
+# Verifica conexão com Graph; exigir que o usuário conecte antes
 try {
-    $ctx = Get-MgContext -ErrorAction SilentlyContinue
-    if (-not $ctx) {
-        Import-Module Microsoft.Graph -ErrorAction Stop
-        Connect-MgGraph -Scopes "User.ReadWrite.All","Group.ReadWrite.All" | Out-Null
-    }
+    Import-Module Microsoft.Graph -ErrorAction Stop
 } catch {
-    throw "Falha ao conectar no Microsoft Graph. Detalhes: $($_.Exception.Message)"
+    throw "Falha ao carregar o módulo Microsoft.Graph: $($_.Exception.Message)"
+}
+
+$requiredScopes = @("User.ReadWrite.All","Group.ReadWrite.All")
+$ctx = Get-MgContext -ErrorAction SilentlyContinue
+if (-not $ctx -or -not $ctx.Scopes -or ($requiredScopes | Where-Object { $ctx.Scopes -notcontains $_ }).Count -gt 0) {
+    throw "Sem conexão ativa com o Microsoft Graph com as permissões necessárias. Antes de executar, conecte-se com: Connect-MgGraph -Scopes 'User.ReadWrite.All','Group.ReadWrite.All'"
 }
 
 # Dados fictícios
