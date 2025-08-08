@@ -81,7 +81,7 @@ function New-UserNameCombo {
     param([string]$Domain)
     $fn = Get-Random -InputObject $firstNames
     $ln = Get-Random -InputObject $lastNames
-    $mailNick = ($fn + $ln) -replace '[^a-zA-Z0-9]', '' | ForEach-Object { $_.ToLower() }
+    $mailNick = (($fn + $ln) -replace '[^a-zA-Z0-9]', '').ToLower()
     $upn = ("{0}.{1}@{2}" -f $fn,$ln,$Domain).ToLower()
     $display = "$fn $ln"
     [pscustomobject]@{
@@ -100,7 +100,7 @@ function Ensure-Group {
     $grp = Get-MgGroup -Filter "displayName eq '$escaped'" -All -ConsistencyLevel eventual | Select-Object -First 1
     if (-not $grp) {
         # mailNickname precisa ser único (sem espaços e minúsculo)
-        $mailNick = ($DisplayName -replace '\\s','') .ToLower()
+        $mailNick = (($DisplayName -replace '\s+','')).ToLower()
         # Se já existir apelido igual, anexa um sufixo aleatório
         $existsNick = Get-MgGroup -Filter "mailNickname eq '$mailNick'" -All -ConsistencyLevel eventual | Select-Object -First 1
         if ($existsNick) { $mailNick = "$mailNick$([System.Guid]::NewGuid().ToString('N').Substring(0,6))" }
